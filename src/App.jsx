@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import TestConexion from './components/TestConexion'; // ← Añade esta importación
+import { testConnection } from './services/healthCheck';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [conexionEstado, setConexionEstado] = useState(null);
+
+  useEffect(() => {
+    // Probar conexión con backend al cargar
+    const probar = async () => {
+      try {
+        await testConnection();
+        setConexionEstado('conectado');
+      } catch (error) {
+        setConexionEstado('error');
+        console.error('Error de conexión con backend:', error);
+      }
+    };
+    probar();
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className="App">
+        {/* Banner de estado de conexión (opcional) */}
+        {conexionEstado === 'error' && (
+          <div style={{
+            backgroundColor: '#ffebee',
+            color: '#c62828',
+            padding: '10px',
+            textAlign: 'center',
+            borderBottom: '1px solid #ffcdd2'
+          }}>
+            ⚠️ No se pudo conectar con el backend. Verifica que esté corriendo en localhost:8080
+          </div>
+        )}
+        
+        {conexionEstado === 'conectado' && (
+          <div style={{
+            backgroundColor: '#e8f5e9',
+            color: '#2e7d32',
+            padding: '10px',
+            textAlign: 'center',
+            borderBottom: '1px solid #c8e6c9'
+          }}>
+            ✅ Conectado al backend correctamente
+          </div>
+        )}
+
+        {/* Componente de prueba de conexión (solo para desarrollo) */}
+        <TestConexion />
+
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+        </Routes>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;
